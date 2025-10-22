@@ -1,7 +1,7 @@
 import random
 
 # Función que crea el tablero generando un camino garantizado de X a 0
-# el resto de las casillas las completa de forma aleatoria
+# el resto de las casillas las completa de forma aleatoria.
 def crear_tablero_con_camino(n):
     tablero = [["*" for _ in range(n)] for _ in range(n)]
 
