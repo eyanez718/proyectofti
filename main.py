@@ -1,6 +1,7 @@
 import random
 from automata.fa.nfa import NFA
 from automata.base.exceptions import RejectionException
+import colorama
 
 # Función que crea el tablero generando un camino garantizado de X a 0
 # el resto de las casillas las completa de forma aleatoria.
@@ -40,6 +41,30 @@ def crearTablero(n):
     tablero[oi][oj] = "0"
 
     return tablero, (xi, xj)
+
+# Función que crea escenarios fijos
+def crearTableroFijo(n):
+    if n == 3:
+        simbolos = ["X", " ", " ", "*", " ", "*", "*", " ", "0"]
+
+        # Convertir la lista en matriz 3x3
+        tablero = [simbolos[i:i+3] for i in range(0, 9, 3)]
+
+        return tablero, (0, 0)
+    if n == 4:
+        simbolos = ["X", " ", " ", "*", " ", "*", " ", " ", "*", " ", "*", " ", " ", "0", " ", " "]
+
+        # Convertir la lista en matriz 3x3
+        tablero = [simbolos[i:i+4] for i in range(0, 16, 4)]
+
+        return tablero, (0, 0)
+    if n == 5:
+        simbolos = ["*", "*", " ", " ", "0", " ", " ", " ", "*", " ", " ", "*", "*", " ", " ", " ", " ", " ", "*", " ", "*", " ", "X", " ", " "]
+        # Convertir la lista en matriz 3x3
+        tablero = [simbolos[i:i+5] for i in range(0, 25, 5)]
+
+        return tablero, (4, 2)
+
 
 # Función que crea el autómata no determinista a partir del tablero
 def crearAutomataDesdeTablero(tablero):
@@ -100,14 +125,38 @@ def crearAutomataDesdeTablero(tablero):
 
 # Función que imprime el tablero
 def mostrarTablero(tablero):
+    colores = {
+        "*": RED,
+        "X": CYAN,
+        "G": GREEN,
+        "0": GREEN,
+        "P": RED,
+    }
+
     n = len(tablero)
     bordeHorizontal = "+" + "---+" * n
 
-    print(bordeHorizontal) # Imprimo el borde superior
+    print(bordeHorizontal)  # borde superior
     for fila in tablero:
-        filaStr = "| " + " | ".join(fila) + " |"
-        print(filaStr) # Imprimo la fila
-        print(bordeHorizontal) # Imprimo el borde inferior a la fila
+        # Aplico el color a cada celda según su contenido
+        fila_coloreada = []
+        for celda in fila:
+            color = colores.get(celda, "")
+            celda_coloreada = f"{color}{celda}{RESET}"
+            fila_coloreada.append(celda_coloreada)
+
+        # Construyo la fila como antes
+        filaStr = "| " + " | ".join(fila_coloreada) + " |"
+        print(filaStr)
+        print(bordeHorizontal)
+#    n = len(tablero)
+#    bordeHorizontal = "+" + "---+" * n
+
+#    print(bordeHorizontal) # Imprimo el borde superior
+#    for fila in tablero:
+#        filaStr = "| " + " | ".join(fila) + " |"
+#        print(filaStr) # Imprimo la fila
+#        print(bordeHorizontal) # Imprimo el borde inferior a la fila
         
 # Función que maneja el movimiento del jugador
 def moverJugador(tablero, pos, direccion):
@@ -148,88 +197,132 @@ def moverJugador(tablero, pos, direccion):
         print("\nNo podés salir de los límites del tablero.")
         return pos, "invalido"
 
+colorama.init()
+
+RESET = "\033[0m"
+RED = "\033[31m"
+BLUE = "\033[34m"
+CYAN = "\033[36m"
+YELLOW = "\033[33m"
+GREEN = "\033[32m"
+
+interfazGrafica = 0
+
 while True:
     try:
-        auxContinuarJugando = input("\nDesea jugar? S = Sí - N = No: ")
+        print(f"\n{YELLOW}¿Desea iniciar una nueva partida?{RESET}")
+        print("    S = Sí")
+        print("    N = No")
+        auxContinuarJugando = input("\nRta: ")
         if auxContinuarJugando == "S" or auxContinuarJugando == "s":
             while True:
                 try:
-                    while True:
-                        try:
-                            n = int(input("\nIngresar el tamaño del tablero de nxn donde n >= 3: "))
-                            if n >= 3:
-                                break
-                            else:
-                                print("\nn debe ser >= 3.")
-                        except ValueError:
-                            print("\nNúmero inválido.")
-
-                    auxModoJuego = int(input("\nSeleccione el modo de juego (1 = camino completo / 2 = Paso a paso / 0 = Cancelar): "))
-                    #GENERO EL AUTOMATA
-                    #n = 3 # BORRAR
-
-                    tablero, posicionJugador = crearTablero(n)
-                    automata = crearAutomataDesdeTablero(tablero)
-
-                    #FIN GENEARCION AUTOMATA
-                    if auxModoJuego == 1:
-                        print("\nOpción seleccionada 'Camino completo'")
-                        mostrarTablero(tablero)
-                        auxCaminoElegido = input("\nIngrese una secuencia de movimientos, usar: w (arriba), s (abajo), a (izquierda), d (derecha): ")
-                        if automata.accepts_input(auxCaminoElegido):
-                            print("\n✅ Objetivo conseguido")
-                        else:
-                            print("\n❌ Objetivo no alcanzado")
-                        break
-                    else:
-                        if auxModoJuego == 2:
-                            print("\nOpción seleccionada 'Paso a paso'")
-                            mostrarTablero(tablero)
-                            print("\nPara moverse, usar: w (arriba), s (abajo), a (izquierda), d (derecha).")
-                            auxEstadoActual = automata.initial_state
-                            # Bucle interactivo
+                    print(f"\n{YELLOW}Seleccione el tipo de tablero:{RESET}")
+                    print("    1 = Fijo")
+                    print("    2 = Aleatorio")
+                    print("    0 = Cancelar")
+                    tipoEscenario = int(input("\nRta: "))
+                    if tipoEscenario == 1 or tipoEscenario == 2:
+                        if (tipoEscenario == 1):
                             while True:
-                                auxMovimiento = input("Ingresa el siguiente movimiento: ")
-
-                                if not auxMovimiento:  # terminar la cadena
-                                    break
-                                
-                                if auxMovimiento not in automata.input_symbols:
-                                    print(f"\nSímbolo inválido. Solo se aceptan: {automata.input_symbols}")
-                                    continue
-
-                                # Aplicar transición
-                                if auxMovimiento in automata.transitions[auxEstadoActual]:
-                                    auxEstadoActual = next(iter(automata.transitions[auxEstadoActual][auxMovimiento]))
-
-                                    posicionJugador, estado = moverJugador(tablero, posicionJugador, auxMovimiento)
-                                    mostrarTablero(tablero)
-                                    # Resultado final
-                                    if auxEstadoActual in automata.final_states:
+                                try:
+                                    print(f"\n{YELLOW}Seleccione la dimensión del escenario{RESET}")
+                                    print("    3 = 3x3")
+                                    print("    4 = 4x4")
+                                    print("    5 = 5x5")
+                                    escenarioFijo = int(input("\nRta: "))
+                                    if escenarioFijo == 3 or escenarioFijo == 4 or escenarioFijo == 5:
+                                        tablero, posicionJugador = crearTableroFijo(escenarioFijo)
                                         break
                                     else:
-                                        if estado == 'perdio':
-                                            break
-                                else:
-                                    print("\n❌ Movimiento no permitido desde este estado")
+                                        print(f"\n{RED}Opción inválida{RESET}")
+                                except ValueError:
+                                    print(f"\n{RED}Número inválido{RESET}")
+                        else:
+                            while True:
+                                try:
+                                    print(f"\n{YELLOW}Seleccione el tamaño del tablero de NxN donde N >= 3 y N <= 10{RESET}")
+                                    n = int(input("\nRta: "))
+                                    if n >= 3 and n <= 10:
+                                        tablero, posicionJugador = crearTablero(n)
+                                        break
+                                    else:
+                                        print(f"\n{RED}N debe ser >= 3 y <= 10{RESET}")
+                                except ValueError:
+                                    print(f"\n{RED}Número inválido{RESET}")
 
-                            # Resultado final
-                            if auxEstadoActual in automata.final_states:
-                                print("\n✅ Objetivo alcanzado. Juego ganado.")
+                        print(f"\n{YELLOW}Seleccione el modo de juego{RESET}")
+                        print("    1 = Camino completo")
+                        print("    2 = Paso a paso")
+                        print("    0 = Cancelar")
+                        auxModoJuego = int(input("\nRta: "))
+
+                        automata = crearAutomataDesdeTablero(tablero)
+
+                        if auxModoJuego == 1:
+                            print(f"\n{CYAN}Opción seleccionada 'Camino completo'{RESET}\n")
+                            mostrarTablero(tablero)
+                            print(f"\n{YELLOW}Ingrese una secuencia de movimientos, usando: w (arriba), s (abajo), a (izquierda), d (derecha){RESET}")
+                            auxCaminoElegido = input("Secuencia: ")
+                            if automata.accepts_input(auxCaminoElegido):
+                                print(f"\n{GREEN}Objetivo conseguido{RESET}")
                             else:
-                                print("\n❌ Objetivo no alcanzado. Juego perdido.")
+                                print(f"\n{RED}Objetivo no alcanzado{RESET}")
                             break
                         else:
-                            if auxModoJuego == 0:
+                            if auxModoJuego == 2:
+                                print(f"\n{CYAN}Opción seleccionada 'Paso a paso'{RESET}\n")
+                                mostrarTablero(tablero)
+                                print(f"\n{YELLOW}Para moverse, usar: w (arriba), s (abajo), a (izquierda), d (derecha) o ENTER para finalizar{RESET}")
+                                auxEstadoActual = automata.initial_state
+                                # Bucle interactivo
+                                while True:
+                                    auxMovimiento = input("\nIngrese el siguiente movimiento: ")
+
+                                    if not auxMovimiento:  # terminar la cadena
+                                        break
+                                    
+                                    if auxMovimiento not in automata.input_symbols:
+                                        print(f"\n{RED}Símbolo inválido. Solo se aceptan: {automata.input_symbols}{RESET}")
+                                        continue
+
+                                    # Aplicar transición
+                                    if auxMovimiento in automata.transitions[auxEstadoActual]:
+                                        auxEstadoActual = next(iter(automata.transitions[auxEstadoActual][auxMovimiento]))
+
+                                        posicionJugador, estado = moverJugador(tablero, posicionJugador, auxMovimiento)
+                                        mostrarTablero(tablero)
+                                        # Resultado final
+                                        if auxEstadoActual in automata.final_states:
+                                            break
+                                        else:
+                                            if estado == 'perdio':
+                                                break
+                                    else:
+                                        print(f"\n{RED}Movimiento no permitido desde este estado{RESET}")
+
+                                # Resultado final
+                                if auxEstadoActual in automata.final_states:
+                                    print(f"\n{GREEN}Objetivo alcanzado. Juego ganado{RESET}")
+                                else:
+                                    print(f"\n{RED}Objetivo no alcanzado. Juego perdido{RESET}")
                                 break
                             else:
-                                print("\nOpción inválida.")
+                                if auxModoJuego == 0:
+                                    break
+                                else:
+                                    print(f"\n{RED}Opción inválida{RESET}")
+                    else:
+                        if tipoEscenario == 0:
+                            break
+                        else:
+                            print(f"\n{RED}Opción inválida.{RESET}")
                 except ValueError:
-                    print("\nOpción inválida.")
+                    print(f"\n{RED}Opción inválida{RESET}")
         else:
             if auxContinuarJugando == "N" or auxContinuarJugando == "n":
                 break
             else:
-                print("\nOpción no reconocida.")
+                print(f"\n{RED}Opción no reconocida{RESET}")
     except ValueError:
-        print("\nOpción inválida.")
+        print(f"\n{RED}Opción inválida{RESET}")
