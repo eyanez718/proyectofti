@@ -208,13 +208,19 @@ GREEN = "\033[32m"
 
 interfazGrafica = 0
 
+print(f"{YELLOW}BIENVENIDO A EL JUEGO{RESET}")
+print(f"\n{YELLOW}Este juego se desarrolló como parte del proyecto integrador de la materia Fundamentos Teóricos de Informática de la carrera Licenciatura en Informática de la Universidad Nacional de la Patagonia San Juan Bosco.{RESET}")
+print(f"\n{YELLOW}El desarrollo fue realizado por los integrantes del GRUPO 11: Santiago Servin y Emanuel Yañez.{RESET}")
+print(f"\n{YELLOW}Acceder al repositorio del proyecto: {CYAN}https://github.com/eyanez718/proyectofti{RESET}")
+
 while True:
     try:
-        print(f"\n{YELLOW}¿Desea iniciar una nueva partida?{RESET}")
-        print("    S = Sí")
-        print("    N = No")
-        auxContinuarJugando = input("\nRta: ")
-        if auxContinuarJugando == "S" or auxContinuarJugando == "s":
+        print(f"\n{YELLOW}Seleccione una opción:{RESET}")
+        print("    1 = Jugar una partida")
+        print("    2 = Leer instrucciones")
+        print("    0 = Salir")
+        auxContinuarJugando = int(input("\nRta: "))
+        if auxContinuarJugando == 1:
             while True:
                 try:
                     print(f"\n{YELLOW}Seleccione el tipo de tablero:{RESET}")
@@ -320,9 +326,18 @@ while True:
                 except ValueError:
                     print(f"\n{RED}Opción inválida{RESET}")
         else:
-            if auxContinuarJugando == "N" or auxContinuarJugando == "n":
-                break
+            if auxContinuarJugando == 2:
+                print(f"\n{CYAN}El juego consiste en un tablero de NxN en el cual el personaje X debe llegar al objetivo 0 moviendose por las diferentes casillas.{RESET}")
+                print(f"\n{CYAN}El juego termina cuando el jugador X llega a el objetivo 0 o cuando se encuentra con el obstaculo *.{RESET}")
+                print(f"\n{CYAN}El personaje se puede mover en cuatro direcciones:{RESET}")
+                print(f"    {CYAN}Arriba (W){RESET}")
+                print(f"    {CYAN}Abajo (S){RESET}")
+                print(f"    {CYAN}Izquierda (A){RESET}")
+                print(f"    {CYAN}Derecha (D){RESET}")
             else:
-                print(f"\n{RED}Opción no reconocida{RESET}")
+                if auxContinuarJugando == 0:
+                    break
+                else:
+                    print(f"\n{RED}Opción no reconocida{RESET}")
     except ValueError:
         print(f"\n{RED}Opción inválida{RESET}")
