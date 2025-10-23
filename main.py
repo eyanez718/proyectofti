@@ -1,25 +1,27 @@
 import random
+from automata.fa.nfa import NFA
+from automata.base.exceptions import RejectionException
 
 # Función que crea el tablero generando un camino garantizado de X a 0
 # el resto de las casillas las completa de forma aleatoria.
-def crear_tablero_con_camino(n):
+def crearTablero(n):
     tablero = [["*" for _ in range(n)] for _ in range(n)]
 
-    x_i, x_j = random.randint(0, n - 1), random.randint(0, n - 1)
-    o_i, o_j = random.randint(0, n - 1), random.randint(0, n - 1)
-    while (x_i, x_j) == (o_i, o_j):
-        o_i, o_j = random.randint(0, n - 1), random.randint(0, n - 1)
+    xi, xj = random.randint(0, n - 1), random.randint(0, n - 1)
+    oi, oj = random.randint(0, n - 1), random.randint(0, n - 1)
+    while (xi, xj) == (oi, oj):
+        oi, oj = random.randint(0, n - 1), random.randint(0, n - 1)
 
-    camino = [(x_i, x_j)]
-    i, j = x_i, x_j
-    while (i, j) != (o_i, o_j):
-        if i < o_i:
+    camino = [(xi, xj)]
+    i, j = xi, xj
+    while (i, j) != (oi, oj):
+        if i < oi:
             i += 1
-        elif i > o_i:
+        elif i > oi:
             i -= 1
-        elif j < o_j:
+        elif j < oj:
             j += 1
-        elif j > o_j:
+        elif j > oj:
             j -= 1
         camino.append((i, j))
 
@@ -34,82 +36,200 @@ def crear_tablero_con_camino(n):
                 tablero[i][j] = random.choice(["*", " "])
 
     # Colocar la X y el 0
-    tablero[x_i][x_j] = "X"
-    tablero[o_i][o_j] = "0"
+    tablero[xi][xj] = "X"
+    tablero[oi][oj] = "0"
 
-    return tablero, (x_i, x_j)
+    return tablero, (xi, xj)
+
+# Función que crea el autómata no determinista a partir del tablero
+def crearAutomataDesdeTablero(tablero):
+    filas = len(tablero)
+    columnas = len(tablero[0])
+
+    # Armo los estados
+    estados = [f"q{i}" for i in range(filas*columnas)]
+    estadoInicial = None
+    estadosFinales = set()
+
+    for i in range(filas):
+        for j in range(columnas):
+            simbolo = tablero[i][j]
+            idx = i * columnas + j
+            if simbolo == "X":
+                estadoInicial = f"q{idx}"
+            elif simbolo == "0":
+                estadosFinales.add(f"q{idx}")
+
+    # Creo las transiciones
+    simbolosPosibles = {"w", "s", "a", "d"}
+    transiciones = {}
+
+    # Agrego las direcciones
+    direcciones = {
+        'w': (-1,0),
+        's': (1,0),
+        'a': (0,-1),
+        'd': (0,1)
+    }
+
+    # Recorro la matriz
+    for i in range(filas):
+        for j in range(columnas):
+            contenido = tablero[i][j]
+            idx = i * columnas + j
+            estadoActual = f"q{idx}"
+
+            # Solo celdas "X" o " " generan transiciones
+            if contenido in ["X", " "]:
+                transiciones[estadoActual] = {}
+                for simbolo, (di,dj) in direcciones.items():
+                    ni, nj = i+di, j+dj
+                    if 0 <= ni < filas and 0 <= nj < columnas:
+                        estadoVecino = f"q{ni*columnas + nj}"
+                        transiciones[estadoActual][simbolo] = {estadoVecino}
+
+    # Armo el autómata no determinista
+    automata = NFA(
+        states=set(estados),
+        input_symbols=simbolosPosibles,
+        transitions=transiciones,
+        initial_state=estadoInicial,
+        final_states=estadosFinales
+    )
+    return automata
 
 # Función que imprime el tablero
-def mostrar_tablero(tablero):
+def mostrarTablero(tablero):
     n = len(tablero)
-    borde_horizontal = "+" + "---+" * n
+    bordeHorizontal = "+" + "---+" * n
 
-    print(borde_horizontal) # Imprimo el borde superior
+    print(bordeHorizontal) # Imprimo el borde superior
     for fila in tablero:
-        fila_str = "| " + " | ".join(fila) + " |"
-        print(fila_str) # Imprimo la fila
-        print(borde_horizontal) # Imprimo el borde inferior a la fila
+        filaStr = "| " + " | ".join(fila) + " |"
+        print(filaStr) # Imprimo la fila
+        print(bordeHorizontal) # Imprimo el borde inferior a la fila
         
 # Función que maneja el movimiento del jugador
-def mover_jugador(tablero, pos, direccion):
+def moverJugador(tablero, pos, direccion):
     i, j = pos
     n = len(tablero)
-    nueva_i, nueva_j = i, j
+    nuevai, nuevaj = i, j
 
     if direccion == "w": # Moverse a arriba
-        nueva_i -= 1
+        nuevai -= 1
     elif direccion == "s": # Moverse a abajo
-        nueva_i += 1
+        nuevai += 1
     elif direccion == "a": # Moverse a izquierda
-        nueva_j -= 1
+        nuevaj -= 1
     elif direccion == "d": # Moverse a derecha
-        nueva_j += 1
+        nuevaj += 1
     else:
         print("Movimiento inválido. Usar: w (arriba), s (abajo), a (izquierda), d (derecha).")
         return pos, "invalido"
 
-    if 0 <= nueva_i < n and 0 <= nueva_j < n:
-        celda = tablero[nueva_i][nueva_j]
+    if 0 <= nuevai < n and 0 <= nuevaj < n:
+        celda = tablero[nuevai][nuevaj]
 
         if celda == "*":
             print("\nEncontraste un obstaculo. Perdiste.")
             tablero[i][j] = " "
-            tablero[nueva_i][nueva_j] = "P"
-            return (nueva_i, nueva_j), "perdio"
+            tablero[nuevai][nuevaj] = "P"
+            return (nuevai, nuevaj), "perdio"
         elif celda == "0":
             print("\n¡Encontraste el objetivo! Ganaste.")
             tablero[i][j] = " "
-            tablero[nueva_i][nueva_j] = "G"
-            return (nueva_i, nueva_j), "gano"
+            tablero[nuevai][nuevaj] = "G"
+            return (nuevai, nuevaj), "gano"
         else:
             tablero[i][j] = " "
-            tablero[nueva_i][nueva_j] = "X"
-            return (nueva_i, nueva_j), "sigue"
+            tablero[nuevai][nuevaj] = "X"
+            return (nuevai, nuevaj), "sigue"
     else:
         print("\nNo podés salir de los límites del tablero.")
         return pos, "invalido"
 
-# Bloque principal, pide que se ingrese la dimensión del tablero,
-# luego pide los movimientos hasta que se termina el juego
 while True:
     try:
-        n = int(input("Ingresar el tamaño del tablero de nxn donde n >= 3: "))
-        if n >= 3:
-            break
+        auxContinuarJugando = input("\nDesea jugar? S = Sí - N = No: ")
+        if auxContinuarJugando == "S" or auxContinuarJugando == "s":
+            while True:
+                try:
+                    while True:
+                        try:
+                            n = int(input("\nIngresar el tamaño del tablero de nxn donde n >= 3: "))
+                            if n >= 3:
+                                break
+                            else:
+                                print("\nn debe ser >= 3.")
+                        except ValueError:
+                            print("\nNúmero inválido.")
+
+                    auxModoJuego = int(input("\nSeleccione el modo de juego (1 = camino completo / 2 = Paso a paso / 0 = Cancelar): "))
+                    #GENERO EL AUTOMATA
+                    #n = 3 # BORRAR
+
+                    tablero, posicionJugador = crearTablero(n)
+                    automata = crearAutomataDesdeTablero(tablero)
+
+                    #FIN GENEARCION AUTOMATA
+                    if auxModoJuego == 1:
+                        print("\nOpción seleccionada 'Camino completo'")
+                        mostrarTablero(tablero)
+                        auxCaminoElegido = input("\nIngrese una secuencia de movimientos, usar: w (arriba), s (abajo), a (izquierda), d (derecha): ")
+                        if automata.accepts_input(auxCaminoElegido):
+                            print("\n✅ Objetivo conseguido")
+                        else:
+                            print("\n❌ Objetivo no alcanzado")
+                        break
+                    else:
+                        if auxModoJuego == 2:
+                            print("\nOpción seleccionada 'Paso a paso'")
+                            mostrarTablero(tablero)
+                            print("\nPara moverse, usar: w (arriba), s (abajo), a (izquierda), d (derecha).")
+                            auxEstadoActual = automata.initial_state
+                            # Bucle interactivo
+                            while True:
+                                auxMovimiento = input("Ingresa el siguiente movimiento: ")
+
+                                if not auxMovimiento:  # terminar la cadena
+                                    break
+                                
+                                if auxMovimiento not in automata.input_symbols:
+                                    print(f"\nSímbolo inválido. Solo se aceptan: {automata.input_symbols}")
+                                    continue
+
+                                # Aplicar transición
+                                if auxMovimiento in automata.transitions[auxEstadoActual]:
+                                    auxEstadoActual = next(iter(automata.transitions[auxEstadoActual][auxMovimiento]))
+
+                                    posicionJugador, estado = moverJugador(tablero, posicionJugador, auxMovimiento)
+                                    mostrarTablero(tablero)
+                                    # Resultado final
+                                    if auxEstadoActual in automata.final_states:
+                                        break
+                                    else:
+                                        if estado == 'perdio':
+                                            break
+                                else:
+                                    print("\n❌ Movimiento no permitido desde este estado")
+
+                            # Resultado final
+                            if auxEstadoActual in automata.final_states:
+                                print("\n✅ Objetivo alcanzado. Juego ganado.")
+                            else:
+                                print("\n❌ Objetivo no alcanzado. Juego perdido.")
+                            break
+                        else:
+                            if auxModoJuego == 0:
+                                break
+                            else:
+                                print("\nOpción inválida.")
+                except ValueError:
+                    print("\nOpción inválida.")
         else:
-            print("n debe ser >= 3.")
+            if auxContinuarJugando == "N" or auxContinuarJugando == "n":
+                break
+            else:
+                print("\nOpción no reconocida.")
     except ValueError:
-        print("Número inválido.")
-
-tablero, posicion_jugador = crear_tablero_con_camino(n)
-
-print("Para moverse, usar: w (arriba), s (abajo), a (izquierda), d (derecha).\n")
-mostrar_tablero(tablero)
-
-while True:
-    direccion = input("\nIngresar el siguiente movimiento: ").strip().lower()
-    posicion_jugador, estado = mover_jugador(tablero, posicion_jugador, direccion)
-    mostrar_tablero(tablero)
-
-    if estado in ["gano", "perdio"]:
-        break
+        print("\nOpción inválida.")
