@@ -1,0 +1,2 @@
+class ErrorEntrada(Exception):
+	print ()

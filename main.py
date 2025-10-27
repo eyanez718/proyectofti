@@ -1,6 +1,8 @@
 import random
 from automata.fa.nfa import NFA
 from automata.base.exceptions import RejectionException
+from Excepciones import ErrorEntrada
+from Excepciones import ErrorEntrada
 import colorama
 
 # Función que crea el tablero generando un camino garantizado de X a 0
@@ -20,7 +22,7 @@ def crearTablero(n):
             i += 1
         elif i > oi:
             i -= 1
-        elif j < oj:
+        elif j < oj:    
             j += 1
         elif j > oj:
             j -= 1
@@ -54,13 +56,13 @@ def crearTableroFijo(n):
     if n == 4:
         simbolos = ["X", " ", " ", "*", " ", "*", " ", " ", "*", " ", "*", " ", " ", "0", " ", " "]
 
-        # Convertir la lista en matriz 3x3
+        # Convertir la lista en matriz 4x4
         tablero = [simbolos[i:i+4] for i in range(0, 16, 4)]
 
         return tablero, (0, 0)
     if n == 5:
         simbolos = ["*", "*", " ", " ", "0", " ", " ", " ", "*", " ", " ", "*", "*", " ", " ", " ", " ", " ", "*", " ", "*", " ", "X", " ", " "]
-        # Convertir la lista en matriz 3x3
+        # Convertir la lista en matriz 5x5
         tablero = [simbolos[i:i+5] for i in range(0, 25, 5)]
 
         return tablero, (4, 2)
@@ -267,13 +269,27 @@ while True:
 
                         if auxModoJuego == 1:
                             print(f"\n{CYAN}Opción seleccionada 'Camino completo'{RESET}\n")
-                            mostrarTablero(tablero)
-                            print(f"\n{YELLOW}Ingrese una secuencia de movimientos, usando: w (arriba), s (abajo), a (izquierda), d (derecha){RESET}")
-                            auxCaminoElegido = input("Secuencia: ")
-                            if automata.accepts_input(auxCaminoElegido):
-                                print(f"\n{GREEN}Objetivo conseguido{RESET}")
-                            else:
-                                print(f"\n{RED}Objetivo no alcanzado{RESET}")
+                            while True:
+                                mostrarTablero(tablero)
+                                print(f"\n{YELLOW}Ingrese una secuencia de movimientos, usando: w (arriba), s (abajo), a (izquierda), d (derecha){RESET}")
+                                auxCaminoElegido = input("Secuencia: ")
+                                if automata.accepts_input(auxCaminoElegido):
+                                    print(f"\n{GREEN}Objetivo conseguido{RESET}")
+                                    break
+                                else:
+                                    print(f"\n{RED}Objetivo no alcanzado{RESET}")
+                                    while True:
+                                        try:
+                                            print(f"\n{YELLOW}desea reintentar? (s/n){RESET}")
+                                            rtaReintentar = input ("\nRta: ")                             
+                                            if rtaReintentar not in ["s", "n"]:
+                                                raise ErrorEntrada ("La respuesta debe ser (s/n)")
+                                            break
+                                        except ErrorEntrada as e:
+                                            print(f"\n{RED}Error-Entrada: {e}{RESET}")
+                                    print (rtaReintentar)
+                                    if rtaReintentar == "n":
+                                        break
                             break
                         else:
                             if auxModoJuego == 2:
