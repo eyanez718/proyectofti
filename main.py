@@ -134,7 +134,6 @@ def mostrarTablero(tablero):
         "0": GREEN,
         "P": RED,
     }
-
     n = len(tablero)
     bordeHorizontal = "+" + "---+" * n
 
@@ -201,20 +200,28 @@ def moverJugador(tablero, pos, direccion):
 
 
 
-def posCasillasBloqueadas (tablero):
-    filas = len(tablero)
-    columnas = len(tablero[0])
-    ListaPosicionesBloqueadas = []
+def traductorDirecciones(caminoActual):
+    direcciones = []
     
-    for i in range (filas):
-        for j in range (columnas):
-            if tablero[i][j] == "*":
-                ListaPosicionesBloqueadas.append((i,j))
-    
-    return ListaPosicionesBloqueadas
-    
+    for i in range(len(caminoActual) - 1):
+        di = caminoActual[i+1][0] - caminoActual[i][0]
+        dj = caminoActual[i+1][1] - caminoActual[i][1]
 
-def busquedaProfundidad (tablero, i, j, casillasVisitadas, caminoLlegada):
+        match (di, dj):
+            case (-1, 0):
+                direcciones.append("w") 
+            case (1, 0):
+                direcciones.append("s")  
+            case (0, 1):
+                direcciones.append("d")  
+            case (0, -1):
+                direcciones.append("a")  
+                
+    # print ("camino llegada: ",caminoActual)
+    # print ("direcciones: ", direcciones)
+    return direcciones
+
+def busquedaProfundidad (tablero, i, j, casillasVisitadas, caminoActual):
     #limites
     filas = len(tablero)
     columnas = len(tablero[0])
@@ -227,25 +234,62 @@ def busquedaProfundidad (tablero, i, j, casillasVisitadas, caminoLlegada):
     if tablero [i][j] == "*" or (i,j) in casillasVisitadas:
         return False
     
+    caminoActual.append((i,j))
+    casillasVisitadas.append((i,j))
     #llega a un estado final
     if tablero [i][j] == "0":
-        caminoLlegada.append((i,j))
         return True
     
-    casillasVisitadas.append((i,j))
     
     #condicion normal
     direcciones = [(0,-1), (0,1), (1,0), (-1,0)]
     for di, dj in direcciones:
-        if busquedaProfundidad(tablero, i+di, j+dj, casillasVisitadas, caminoLlegada):
-            print ("camino encontrado: ", caminoLlegada)
+        if busquedaProfundidad(tablero, i+di, j+dj, casillasVisitadas, caminoActual):
             return True
     
     #si no encuentra ningun camino
-    caminoLlegada.pop()
+    caminoActual.pop()
     return False
     
-    
+def dfs_con_nfa(tablero, i, j, estado_actual, nfa, visitadas=None, camino=None, soluciones=None):
+    if visitadas is None:
+        visitadas = set()
+    if camino is None:
+        camino = []
+    if soluciones is None:
+        soluciones = []
+
+    filas, columnas = len(tablero), len(tablero[0])
+    if i < 0 or j < 0 or i >= filas or j >= columnas:
+        return
+    if tablero[i][j] == "*" or (i, j, estado_actual) in visitadas:
+        return
+
+    visitadas.add((i, j, estado_actual))
+    camino.append((i, j, estado_actual))
+
+    # Condición de éxito
+    if tablero[i][j] == "0" and estado_actual in nfa.final_states:
+        soluciones.append(list(camino))
+    else:
+        direcciones = {
+            "w": (-1, 0),
+            "s": (1, 0),
+            "a": (0, -1),
+            "d": (0, 1)
+        }
+
+        for simbolo, (di, dj) in direcciones.items():
+            ni, nj = i + di, j + dj
+
+            if simbolo in nfa.transitions[estado_actual]:
+                for sig_estado in nfa.transitions[estado_actual][simbolo]:
+                    dfs_con_nfa(tablero, ni, nj, sig_estado, nfa, visitadas, camino, soluciones)
+
+    camino.pop()
+    visitadas.remove((i, j, estado_actual))
+    return soluciones
+
     
     
 
@@ -312,6 +356,7 @@ while True:
                         print(f"\n{YELLOW}Seleccione el modo de juego{RESET}")
                         print("    1 = Camino completo")
                         print("    2 = Paso a paso")
+                        print("    3 = Automatico")
                         print("    0 = Cancelar")
                         auxModoJuego = int(input("\nRta: "))
 
@@ -380,6 +425,40 @@ while True:
                                     print(f"\n{RED}Objetivo no alcanzado. Juego perdido{RESET}")
                                 break
                             else:
+                                if auxModoJuego == 3:
+                                    camino = []
+                                    visitadas = []
+                                    direcciones = []
+                                    busquedaProfundidad(tablero, posicionJugador[0], posicionJugador[1], visitadas, camino)
+                                    # dfs_con_nfa(tablero, , visitadas, camino)
+                                    direcciones = traductorDirecciones (camino)
+                                    auxEstadoActual = automata.initial_state
+                                    
+                                    for i in direcciones:
+                                        auxMovimiento = i
+                                        # Aplicar transición
+                                        if auxMovimiento in automata.transitions[auxEstadoActual]:
+                                            auxEstadoActual = next(iter(automata.transitions[auxEstadoActual][auxMovimiento]))
+
+                                            posicionJugador, estado = moverJugador(tablero, posicionJugador, auxMovimiento)
+                                            mostrarTablero(tablero)
+                                            # Resultado final
+                                            if auxEstadoActual in automata.final_states:
+                                                break
+                                            else:
+                                                if estado == 'perdio':
+                                                    break
+                                        else:
+                                            print(f"\n{RED}Movimiento no permitido desde este estado{RESET}")
+                                            
+                                        input("\nENTER realizar movimiento")
+                                    # Resultado final
+                                    if auxEstadoActual in automata.final_states:
+                                        print(f"\n{GREEN}Objetivo alcanzado. Juego ganado{RESET}")
+                                    else:
+                                        print(f"\n{RED}Objetivo no alcanzado. Juego perdido{RESET}")
+                                    break
+                                    
                                 if auxModoJuego == 0:
                                     break
                                 else:
