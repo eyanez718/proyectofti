@@ -4,6 +4,7 @@ from automata.base.exceptions import RejectionException
 from Excepciones import ErrorEntrada
 from Excepciones import ErrorEntrada
 import colorama
+import os
 
 # Función que crea el tablero generando un camino garantizado de X a 0
 # el resto de las casillas las completa de forma aleatoria.
@@ -290,8 +291,45 @@ def dfs_con_nfa(tablero, i, j, estado_actual, nfa, visitadas=None, camino=None, 
     visitadas.remove((i, j, estado_actual))
     return soluciones
 
-    
-    
+# Busca las soluciones posibles con para el tablero con un único paso por casilla (estado) 
+def buscarSoluciones(automata, soluciones):   
+    busquedaEnProfundidad(automata, automata.initial_state, "", [], soluciones)
+
+def busquedaEnProfundidad(automata, estadoActual, caminoActual, estadosVisitados, soluciones):
+    estadosVisitados.append(estadoActual)
+    if estadoActual in automata.final_states: # Llegué al objetivo, es un camino válido
+        soluciones.append(caminoActual)
+    else:
+        if not automata.transitions.get(estadoActual, {}): # No tengo transiciones, es un camino sin salida
+            pass # No hago nada
+        else:
+            # Verifico las transiciones en las 4 direcciones
+            #if "w" in automata.transitions[estadoActual]: # Puedo ir a arriba
+                #caminoActual = caminoActual + "w" # Concateno el símbolo de la transición
+                #for nuevoEstado in automata.transitions[estadoActual]["w"]: # Aplico la transición
+                    #if not nuevoEstado in estadosVisitados: # Si el nuevoEstado no fue visitado, lo visito
+                        #busquedaEnProfundidad(automata, nuevoEstado, caminoActual + "w", estadosVisitados, soluciones)
+            #if "a" in automata.transitions[estadoActual]: # Puedo ir a arriba
+                #caminoActual = caminoActual + "a" # Concateno el símbolo de la transición
+                #for nuevoEstado in automata.transitions[estadoActual]["a"]: # Aplico la transición
+                    #if not nuevoEstado in estadosVisitados: # Si el nuevoEstado no fue visitado, lo visito
+                        #busquedaEnProfundidad(automata, nuevoEstado, caminoActual + "a", estadosVisitados, soluciones)
+            #if "s" in automata.transitions[estadoActual]: # Puedo ir a abajo
+                #caminoActual = caminoActual + "s" # Concateno el símbolo de la transición
+                #for nuevoEstado in automata.transitions[estadoActual]["s"]: # Aplico la transición
+                    #if not nuevoEstado in estadosVisitados: # Si el nuevoEstado no fue visitado, lo visito
+                        #busquedaEnProfundidad(automata, nuevoEstado, caminoActual + "s", estadosVisitados, soluciones)
+            #if "d" in automata.transitions[estadoActual]: # Puedo ir a derecha
+                #caminoActual = caminoActual + "d" # Concateno el símbolo de la transición
+                #for nuevoEstado in automata.transitions[estadoActual]["d"]: # Aplico la transición
+                    #if not nuevoEstado in estadosVisitados: # Si el nuevoEstado no fue visitado, lo visito
+                        #busquedaEnProfundidad(automata, nuevoEstado, caminoActual + "d", estadosVisitados, soluciones)
+            for simbolo in ['w', 'a', 's', 'd']:
+                if simbolo in automata.transitions[estadoActual]:
+                    for nuevoEstado in automata.transitions[estadoActual][simbolo]:
+                        if not nuevoEstado in estadosVisitados:
+                            busquedaEnProfundidad(automata, nuevoEstado, caminoActual + simbolo, estadosVisitados, soluciones)
+    estadosVisitados.remove(estadoActual)
 
 colorama.init()
 
@@ -302,15 +340,12 @@ CYAN = "\033[36m"
 YELLOW = "\033[33m"
 GREEN = "\033[32m"
 
-interfazGrafica = 0
-
-print(f"{YELLOW}BIENVENIDO A EL JUEGO{RESET}")
-print(f"\n{YELLOW}Este juego se desarrolló como parte del proyecto integrador de la materia Fundamentos Teóricos de Informática de la carrera Licenciatura en Informática de la Universidad Nacional de la Patagonia San Juan Bosco.{RESET}")
-print(f"\n{YELLOW}El desarrollo fue realizado por los integrantes del GRUPO 11: Santiago Servin y Emanuel Yañez.{RESET}")
-print(f"\n{YELLOW}Acceder al repositorio del proyecto: {CYAN}https://github.com/eyanez718/proyectofti{RESET}")
-
 while True:
     try:
+        print(f"{YELLOW}BIENVENIDO A EL JUEGO{RESET}")
+        print(f"\n{YELLOW}Este juego se desarrolló como parte del proyecto integrador de la materia Fundamentos Teóricos de Informática de la carrera Licenciatura en Informática de la Universidad Nacional de la Patagonia San Juan Bosco.{RESET}")
+        print(f"\n{YELLOW}El desarrollo fue realizado por los integrantes del GRUPO 11: Santiago Servin y Emanuel Yañez.{RESET}")
+        print(f"\n{YELLOW}Acceder al repositorio del proyecto: {CYAN}https://github.com/eyanez718/proyectofti{RESET}")
         print(f"\n{YELLOW}Seleccione una opción:{RESET}")
         print("    1 = Jugar una partida")
         print("    2 = Leer instrucciones")
@@ -353,19 +388,24 @@ while True:
                                 except ValueError:
                                     print(f"\n{RED}Número inválido{RESET}")
 
+                        print()
+                        print(f"{YELLOW}Tablero generado{RESET}")
+                        mostrarTablero(tablero)
+
                         print(f"\n{YELLOW}Seleccione el modo de juego{RESET}")
                         print("    1 = Camino completo")
                         print("    2 = Paso a paso")
                         print("    3 = Automatico")
+                        print("    5 = Obtener soluciones")
                         print("    0 = Cancelar")
                         auxModoJuego = int(input("\nRta: "))
 
                         automata = crearAutomataDesdeTablero(tablero)
 
                         if auxModoJuego == 1:
-                            print(f"\n{CYAN}Opción seleccionada 'Camino completo'{RESET}\n")
+                            print(f"\n{CYAN}Opción seleccionada 'Camino completo'{RESET}")
                             while True:
-                                mostrarTablero(tablero)
+                                #mostrarTablero(tablero)
                                 print(f"\n{YELLOW}Ingrese una secuencia de movimientos, usando: w (arriba), s (abajo), a (izquierda), d (derecha){RESET}")
                                 auxCaminoElegido = input("Secuencia: ")
                                 if automata.accepts_input(auxCaminoElegido):
@@ -389,7 +429,7 @@ while True:
                         else:
                             if auxModoJuego == 2:
                                 print(f"\n{CYAN}Opción seleccionada 'Paso a paso'{RESET}\n")
-                                mostrarTablero(tablero)
+                                #mostrarTablero(tablero)
                                 print(f"\n{YELLOW}Para moverse, usar: w (arriba), s (abajo), a (izquierda), d (derecha) o ENTER para finalizar{RESET}")
                                 auxEstadoActual = automata.initial_state
                                 # Bucle interactivo
@@ -458,11 +498,23 @@ while True:
                                     else:
                                         print(f"\n{RED}Objetivo no alcanzado. Juego perdido{RESET}")
                                     break
-                                    
-                                if auxModoJuego == 0:
-                                    break
                                 else:
-                                    print(f"\n{RED}Opción inválida{RESET}")
+                                    if auxModoJuego == 5:
+                                        #mostrarTablero(tablero)
+                                        soluciones = []
+                                        buscarSoluciones(automata, soluciones)
+                                        if len(soluciones) > 0:
+                                            print(f"\n{GREEN}Se encontraron " + str(len(soluciones)) + f" soluciones{RESET}\n")
+                                            for solucion in soluciones:
+                                                print(f"{BLUE}" + solucion + f"{RESET}")
+                                        else:
+                                            print(f"\n{RED}No existen soluciones{RESET}")
+                                        break
+                                    else:
+                                        if auxModoJuego == 0:
+                                            break
+                                        else:
+                                            print(f"\n{RED}Opción inválida{RESET}")
                     else:
                         if tipoEscenario == 0:
                             break
@@ -484,5 +536,11 @@ while True:
                     break
                 else:
                     print(f"\n{RED}Opción no reconocida{RESET}")
+        while True:
+            print(f"\n{YELLOW}Pulse una tecla para continuar{RESET}")
+            rtaReintentar = input ("\n")
+            break
+        # Para limpiar la consola de manera real
+        os.system('cls' if os.name == 'nt' else 'clear')
     except ValueError:
         print(f"\n{RED}Opción inválida{RESET}")
