@@ -199,6 +199,56 @@ def moverJugador(tablero, pos, direccion):
         print("\nNo podés salir de los límites del tablero.")
         return pos, "invalido"
 
+
+
+def posCasillasBloqueadas (tablero):
+    filas = len(tablero)
+    columnas = len(tablero[0])
+    ListaPosicionesBloqueadas = []
+    
+    for i in range (filas):
+        for j in range (columnas):
+            if tablero[i][j] == "*":
+                ListaPosicionesBloqueadas.append((i,j))
+    
+    return ListaPosicionesBloqueadas
+    
+
+def busquedaProfundidad (tablero, i, j, casillasVisitadas, caminoLlegada):
+    #limites
+    filas = len(tablero)
+    columnas = len(tablero[0])
+    
+    #condicion de final
+    #llega a limite
+    if i < 0 or i>=filas or j < 0 or j>=columnas:
+        return False
+    #llega a muro o casilla visitada
+    if tablero [i][j] == "*" or (i,j) in casillasVisitadas:
+        return False
+    
+    #llega a un estado final
+    if tablero [i][j] == "0":
+        caminoLlegada.append((i,j))
+        return True
+    
+    casillasVisitadas.append((i,j))
+    
+    #condicion normal
+    direcciones = [(0,-1), (0,1), (1,0), (-1,0)]
+    for di, dj in direcciones:
+        if busquedaProfundidad(tablero, i+di, j+dj, casillasVisitadas, caminoLlegada):
+            print ("camino encontrado: ", caminoLlegada)
+            return True
+    
+    #si no encuentra ningun camino
+    caminoLlegada.pop()
+    return False
+    
+    
+    
+    
+
 colorama.init()
 
 RESET = "\033[0m"
