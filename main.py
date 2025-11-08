@@ -2,7 +2,6 @@ import random
 from automata.fa.nfa import NFA
 from automata.base.exceptions import RejectionException
 from Excepciones import ErrorEntrada
-from Excepciones import ErrorEntrada
 import colorama
 import os
 
@@ -62,11 +61,11 @@ def crearTableroFijo(n):
 
         return tablero, (0, 0)
     if n == 5:
-        simbolos = ["*", "*", " ", " ", "0", " ", " ", " ", "*", " ", " ", "*", "*", " ", " ", " ", " ", " ", "*", " ", "*", " ", "X", " ", " "]
+        simbolos = ["*", "*", " ", " ", "X", " ", " ", " ", "*", " ", " ", "*", "*", " ", " ", " ", " ", " ", "*", " ", "*", " ", "0", " ", " "]
         # Convertir la lista en matriz 5x5
         tablero = [simbolos[i:i+5] for i in range(0, 25, 5)]
 
-        return tablero, (4, 2)
+        return tablero, (0, 4)
 
 
 # Función que crea el autómata no determinista a partir del tablero
